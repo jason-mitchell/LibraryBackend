@@ -1,9 +1,10 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	"net/http"
 )
 
 type book struct {
@@ -21,13 +22,15 @@ type borrowedentity struct {
 
 func main() {
 	router := gin.Default()
+
+	url := ginSwagger.URL("http://localhost:8080/swagger/doc.json")
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 	router.POST("/borrow", borrowBook)
 	router.GET("/getallbooksread/:user_id", getAllBooksByUserID)
 	router.POST("/return", returnBook)
 	router.Run("localhost:8080")
 }
 
-// borrowBook will add the given book info (JSON body) to the borrowed books under the given user
 func borrowBook(c *gin.Context) {
 	var newLoanedItem borrowedentity
 
