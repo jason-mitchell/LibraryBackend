@@ -102,7 +102,7 @@ func getUsers() {
 }
 
 // -----------------------------------------------------------------------------------------------------
-//
+// Borrow book
 // -----------------------------------------------------------------------------------------------------
 func borrowBook(c *gin.Context) {
 	var newLoanedItem borrowedentity
@@ -121,7 +121,33 @@ func borrowBook(c *gin.Context) {
 	}
 	defer db.Close()
 
-	// DB is fine
+	// DB connection is fine, process given range of books supplied by user
+	for a := range newLoanedItem.Books {
+
+		id := newLoanedItem.Books[a].ID // Get the ID of the book to be borrowed
+		fmt.Println(id)
+		// Query DB to find out if this is a valid book by it's ID
+		sqlQuery := `SELECT * FROM public.books WHERE id = ` + id + `;`
+		rows, err := db.Query(sqlQuery)
+		if err != nil {
+			fmt.Println("This book with ID " + id + " cannot be borrowed")
+		}
+		// Check if book is already borrowed...
+		sqlQuery = `SELECT * FROM public.loans `
+
+		// Book has been found and can be borrowed, now build INSERT statement for loans table
+		fmt.Println("This book with ID " + id + " can successfully be borrowed")
+		sqlStatement := `INSERT INTO public.loans(loan_uid, user_id, book_id, out) VALUES(300, 230, 120, true);`
+		_, err = db.Exec(sqlStatement)
+
+	}
+
+	//	sqlStatement := `INSERT INTO public.loans(loan_uid, user_id, book_id, out) VALUES(300, 230, 120, false);`
+	//	_, err = db.Exec(sqlStatement)
+	//	if err != nil {
+	//		c.IndentedJSON(http.StatusUnauthorized, gin.H{"message": "Unable to insert books into loan list"})
+	//		return
+	//	}
 
 	c.IndentedJSON(http.StatusOK, newLoanedItem)
 }
@@ -171,6 +197,7 @@ func getaAllBooksInLibrary(c *gin.Context) {
 	err = rows.Err()
 	if err != nil {
 		c.IndentedJSON(http.StatusUnauthorized, gin.H{"message": "error retrieving records"})
+		return
 	}
 
 	// Everything went well, return the records

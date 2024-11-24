@@ -28,7 +28,7 @@ var SwaggerInfo = &swag.Spec{
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	//LeftDelim:        "{{",
-	//RightDelim:       "}}",    // Workaround... bug in Swagger apparently!
+	//RightDelim:       "}}",
 }
 
 func init() {
