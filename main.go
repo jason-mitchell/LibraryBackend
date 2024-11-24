@@ -8,6 +8,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"net/http"
 
+	_ "LibrarySystem/docs"
 	_ "github.com/lib/pq"
 )
 
@@ -60,8 +61,8 @@ func main() {
 	router.Run("localhost:8080")
 }
 
-// This function is what I used to test that I could reach the PostgreSQL DB and send a very simpe query to make sure
-// everything works DB side and I am not going down an inadvertent rabbit hole
+// This function is what I used to test that I could reach the PostgreSQL DB and send a very simple query to make sure
+// everything works DB side, and I am not going down an inadvertent rabbit hole
 
 func getUsers() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
@@ -100,6 +101,9 @@ func getUsers() {
 
 }
 
+// -----------------------------------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------------------------------
 func borrowBook(c *gin.Context) {
 	var newLoanedItem borrowedentity
 
@@ -107,9 +111,22 @@ func borrowBook(c *gin.Context) {
 		return
 	}
 
+	// Perform write to DB
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	if err != nil {
+		c.IndentedJSON(http.StatusUnauthorized, gin.H{"message": "Unable to contact database"})
+	}
+	defer db.Close()
+
+	// DB is fine
+
 	c.IndentedJSON(http.StatusOK, newLoanedItem)
 }
 
+//------------------------------------------------------------------
 // getaAllBooksInLibrary will return a list of all available titles
 //------------------------------------------------------------------
 
@@ -122,7 +139,7 @@ func getaAllBooksInLibrary(c *gin.Context) {
 		host, port, user, password, dbname)
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
-		panic(err)
+		c.IndentedJSON(http.StatusUnauthorized, gin.H{"message": "Unable to contact database"})
 	}
 	defer db.Close()
 
@@ -161,7 +178,9 @@ func getaAllBooksInLibrary(c *gin.Context) {
 
 }
 
+// -------------------------------------------------------------------------------------------------
 // returnBook will add the given book info (JSON body) to the returned books under the given user
+// --------------------------------------------------------------------------------------------------
 func returnBook(c *gin.Context) {
 	var newReturnedItem borrowedentity
 
@@ -171,7 +190,9 @@ func returnBook(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, newReturnedItem)
 }
 
+// ------------------------------------------------------------------------------------------
 // getAllBooksByUserID returns all the books the given user has read since using the system
+// ------------------------------------------------------------------------------------------
 func getAllBooksByUserID(c *gin.Context) {
 	user_id := c.Param("user_id")
 
