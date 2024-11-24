@@ -7,6 +7,14 @@ import (
 	"net/http"
 )
 
+const (
+	host     = "192.168.0.60"
+	port     = 5432
+	user     = "postgres"
+	password = "dbpassword"
+	dbname   = "e_library"
+)
+
 type book struct {
 	ID     string `json:"ID"`
 	Title  string `json:"Title"`
@@ -20,6 +28,10 @@ type borrowedentity struct {
 	Books     []book `json:"books"`
 }
 
+type titlesInLibrary struct {
+	Books []book `json:"books"`
+}
+
 func main() {
 	router := gin.Default()
 
@@ -28,6 +40,7 @@ func main() {
 	router.POST("/borrow", borrowBook)
 	router.GET("/getallbooksread/:user_id", getAllBooksByUserID)
 	router.POST("/return", returnBook)
+	router.GET("/getallbooksavailable", getaAllBooksInLibrary)
 	router.Run("localhost:8080")
 }
 
@@ -38,9 +51,35 @@ func borrowBook(c *gin.Context) {
 		return
 	}
 
-	// Successful bind, we have the information from the user
-
 	c.IndentedJSON(http.StatusOK, newLoanedItem)
+}
+
+// getaAllBooksInLibrary will return a list of all available titles
+func getaAllBooksInLibrary(c *gin.Context) {
+	var titlesAvailable titlesInLibrary
+
+	// Build a dummy dataset to test this REST API call
+	titlesAvailable.Books = append(titlesAvailable.Books, book{
+		ID:     "8-99787-01",
+		Title:  "A Brief History of Time",
+		Author: "Stephen Hawking",
+	})
+	titlesAvailable.Books = append(titlesAvailable.Books, book{
+		ID:     "8-995537-01",
+		Title:  "The Art of War",
+		Author: "Sun Tzu",
+	})
+	titlesAvailable.Books = append(titlesAvailable.Books, book{
+		ID:     "8-99234AR7-01",
+		Title:  "Animal Farm",
+		Author: "George Orwell",
+	})
+	titlesAvailable.Books = append(titlesAvailable.Books, book{
+		ID:     "8-9501032-01",
+		Title:  "Citizen Four",
+		Author: "Laura Poitras with Edward Snowden",
+	})
+	c.IndentedJSON(http.StatusOK, titlesAvailable)
 }
 
 // returnBook will add the given book info (JSON body) to the returned books under the given user
@@ -59,7 +98,7 @@ func getAllBooksByUserID(c *gin.Context) {
 
 	var itemsreadbyuser borrowedentity
 
-	// Perform basic sanity checks here
+	// Static data used to return canned responses for checking the API
 	if user_id != "ABCDEF" {
 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "records not found"})
 	} else {
